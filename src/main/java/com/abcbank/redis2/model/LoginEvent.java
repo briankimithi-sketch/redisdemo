@@ -10,7 +10,6 @@ public class LoginEvent {
     private LocalDateTime timestamp;
     private UUID eventId;
 
-    // ✅ Default constructor required for JSON serialization
     public LoginEvent() {
         this.eventId = UUID.randomUUID();
     }

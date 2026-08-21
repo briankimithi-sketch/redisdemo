@@ -1,7 +1,7 @@
 package com.abcbank.redis2.consumer;
 
 import com.abcbank.redis2.config.RabbitConfig;
-import com.abcbank.redis2.model.LoginEvent;   // ✅ POJO event class
+import com.abcbank.redis2.model.LoginEvent;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
