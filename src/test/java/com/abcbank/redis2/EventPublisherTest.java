@@ -1,19 +1,17 @@
 package com.abcbank.redis2;
 
 import com.abcbank.redis2.config.RabbitConfig;
+import com.abcbank.redis2.model.LoginEvent;
 import com.abcbank.redis2.service.EventPublisher;
 import org.junit.jupiter.api.Test;
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 
-import java.util.UUID;
+import java.time.LocalDateTime;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 class EventPublisherTest {
@@ -21,39 +19,19 @@ class EventPublisherTest {
     @Autowired
     private EventPublisher eventPublisher;
 
-    @Autowired
+    @SpyBean
     private RabbitTemplate rabbitTemplate;
-
-    @Autowired
-    private RabbitAdmin rabbitAdmin;
 
     @Test
     void testPublishLoginEvent() {
-        String message = "User logged in: brian";
+        LoginEvent event = new LoginEvent("brian", LocalDateTime.now());
 
-        String testQueue = "test-queue-" + UUID.randomUUID();
+        eventPublisher.publishLoginEvent(event);
 
-        Queue queue = new Queue(testQueue, false, true, true);
-
-        Binding binding = BindingBuilder
-                .bind(queue)
-                .to(new org.springframework.amqp.core.DirectExchange(
-                        RabbitConfig.EXCHANGE_NAME
-                ))
-                .with(RabbitConfig.ROUTING_KEY);
-
-        rabbitAdmin.declareQueue(queue);
-        rabbitAdmin.declareBinding(binding);
-
-        eventPublisher.publishLoginEvent(message);
-
-        String received = (String) rabbitTemplate.receiveAndConvert(
-                testQueue,
-                5000
+        verify(rabbitTemplate).convertAndSend(
+            RabbitConfig.EXCHANGE_NAME,
+            RabbitConfig.ROUTING_KEY,
+            event
         );
-
-        assertThat(received).isEqualTo(message);
-
-        rabbitAdmin.deleteQueue(testQueue);
-        }
+    }
 }

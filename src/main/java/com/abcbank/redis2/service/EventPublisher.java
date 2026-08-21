@@ -1,8 +1,9 @@
 package com.abcbank.redis2.service;
 
+import com.abcbank.redis2.config.RabbitConfig;
+import com.abcbank.redis2.model.LoginEvent;   // ✅ POJO event class
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
-import com.abcbank.redis2.config.RabbitConfig;
 
 @Service
 public class EventPublisher {
@@ -13,11 +14,12 @@ public class EventPublisher {
         this.rabbitTemplate = rabbitTemplate;
     }
 
-    public void publishLoginEvent(String message) {
+    // ✅ Publish a structured LoginEvent object (serialized to JSON)
+    public void publishLoginEvent(LoginEvent event) {
         rabbitTemplate.convertAndSend(
             RabbitConfig.EXCHANGE_NAME,
             RabbitConfig.ROUTING_KEY,
-            message
+            event
         );
     }
 }

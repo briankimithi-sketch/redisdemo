@@ -1,30 +1,34 @@
 package com.abcbank.redis2.controller;
 
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import com.abcbank.redis2.model.Product;
+import com.abcbank.redis2.model.LoginEvent;
+import com.abcbank.redis2.service.ProductService;
 import com.abcbank.redis2.service.EventPublisher;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/products")
 public class ProductController {
 
+    private final ProductService productService;
     private final EventPublisher eventPublisher;
 
-    public ProductController(EventPublisher eventPublisher) {
+    public ProductController(ProductService productService, EventPublisher eventPublisher) {
+        this.productService = productService;
         this.eventPublisher = eventPublisher;
     }
-
+    
     @GetMapping("/{id}")
-    public String getProduct(@PathVariable String id) {
-        // simulate DB + Redis cache hit
-        return "Product " + id;
+    public Product getProduct(@PathVariable Long id) {
+        return productService.getProduct(id);
     }
 
     @GetMapping("/login")
     public String login() {
-        eventPublisher.publishLoginEvent("User logged in: brian");
+        LoginEvent event = new LoginEvent("brian", LocalDateTime.now());
+        eventPublisher.publishLoginEvent(event);
         return "Login event published";
     }
 }
