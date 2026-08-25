@@ -30,12 +30,14 @@ public class ProductService {
 
     /**
      * Get a product by ID.
-     * Uses Redis cache before querying the database.
+     * Redis is checked first before querying the database.
      */
     @Cacheable(value = "products", key = "#id")
     public Product getProduct(Long id) {
 
-        System.out.println("Fetching product " + id + " from DB...");
+        System.out.println(
+                "Fetching product " + id + " from DB..."
+        );
 
         return repo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -57,33 +59,38 @@ public class ProductService {
     @CacheEvict(value = "products", key = "#id")
     public void evictCache(Long id) {
 
-        System.out.println("Evicting cache for product " + id);
+        System.out.println(
+                "Evicting cache for product " + id
+        );
     }
 
     /**
      * Create a new product.
-     * Saves to the database and publishes a ProductCreatedEvent.
+     *
+     * Called by ProductCommandListener when it receives
+     * a CREATE command from RabbitMQ.
      */
     public Product save(Product product) {
 
-        Product saved = repo.save(product);
+        Product savedProduct = repo.save(product);
 
         ProductCreatedEvent event = new ProductCreatedEvent(
-                saved.getId(),
-                saved.getName(),
-                saved.getPrice(),
+                savedProduct.getId(),
+                savedProduct.getName(),
+                savedProduct.getPrice(),
                 LocalDateTime.now()
         );
 
         eventPublisher.publishProductCreatedEvent(event);
 
-        return saved;
+        return savedProduct;
     }
 
     /**
      * Update an existing product.
-     * Updates the database, evicts the Redis cache,
-     * and publishes a ProductUpdatedEvent.
+     *
+     * Called by ProductCommandListener when it receives
+     * an UPDATE command from RabbitMQ.
      */
     @CacheEvict(value = "products", key = "#id")
     public Product update(Long id, Product product) {
@@ -113,11 +120,13 @@ public class ProductService {
 
     /**
      * Delete an existing product.
-     * Deletes from the database, evicts the Redis cache,
-     * and publishes a ProductDeletedEvent.
+     *
+     * Returns the deleted Product so that the
+     * ProductCommandListener can send it back to
+     * the ProductController as the RabbitMQ reply.
      */
     @CacheEvict(value = "products", key = "#id")
-    public void delete(Long id) {
+    public Product delete(Long id) {
 
         Product product = repo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -138,5 +147,7 @@ public class ProductService {
         System.out.println(
                 "Deleted product " + id + " and evicted cache"
         );
+
+        return product;
     }
 }

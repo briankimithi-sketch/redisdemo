@@ -4,34 +4,40 @@ import com.abcbank.redis2.config.RabbitConfig;
 import com.abcbank.redis2.model.LoginEvent;
 import com.abcbank.redis2.service.EventPublisher;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 
 import java.time.LocalDateTime;
 
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
-@SpringBootTest
+@ExtendWith(MockitoExtension.class)
 class EventPublisherTest {
 
-    @Autowired
-    private EventPublisher eventPublisher;
-
-    @SpyBean
+    @Mock
     private RabbitTemplate rabbitTemplate;
+
+    @InjectMocks
+    private EventPublisher eventPublisher;
 
     @Test
     void testPublishLoginEvent() {
+        // Arrange
         LoginEvent event = new LoginEvent("brian", LocalDateTime.now());
 
+        // Act
         eventPublisher.publishLoginEvent(event);
 
+        // Assert
         verify(rabbitTemplate).convertAndSend(
-            RabbitConfig.EXCHANGE_NAME,
-            RabbitConfig.ROUTING_KEY,
-            event
+            eq(RabbitConfig.EXCHANGE_NAME),
+            eq(RabbitConfig.ROUTING_KEY),
+            eq(event)
         );
     }
 }
+

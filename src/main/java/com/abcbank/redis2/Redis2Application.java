@@ -19,9 +19,9 @@ public class Redis2Application {
     @Bean
     CommandLineRunner runner(ProductRepository repo) {
         return args -> {
-            repo.save(new Product("Laptop", 1200.0));
-            repo.save(new Product("Phone", 800.0));
-            repo.save(new Product("Tablet", 500.0));
+            repo.save(new Product("Laptop", Double.valueOf(1200.0)));
+            repo.save(new Product("Phone", Double.valueOf(800.0)));
+            repo.save(new Product("Tablet", Double.valueOf(500.0)));
         };
     }
 }
